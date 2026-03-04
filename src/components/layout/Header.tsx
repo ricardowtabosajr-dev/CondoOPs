@@ -22,12 +22,15 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diff / 86400)}d`
 }
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotifications()
   const [showPanel, setShowPanel] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  // Close panel when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
@@ -38,7 +41,6 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showPanel])
 
-  // Request browser notification permission
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission()
@@ -46,22 +48,28 @@ export function Header() {
   }, [])
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-1 items-center">
-        <button type="button" className="text-slate-500 hover:text-slate-600 lg:hidden">
-          <span className="sr-only">Open sidebar</span>
-          <Menu className="h-6 w-6" aria-hidden="true" />
+    <header className="flex h-14 sm:h-16 items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-6 lg:px-8">
+      <div className="flex flex-1 items-center gap-2">
+        {/* Mobile menu button */}
+        <button
+          type="button"
+          className="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-all lg:hidden"
+          onClick={onMenuClick}
+        >
+          <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
-        <div className="ml-4 flex flex-1">
+
+        {/* Search - hidden on very small screens */}
+        <div className="hidden sm:flex flex-1 ml-2">
           <div className="relative w-full max-w-md">
             <label htmlFor="search-field" className="sr-only">Buscar</label>
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />
               </div>
               <input
                 id="search-field"
-                className="block h-full w-full border-0 py-2 pl-10 pr-3 text-slate-900 placeholder:text-slate-400 focus:ring-0 sm:text-sm"
+                className="block h-full w-full border-0 py-2 pl-9 pr-3 text-slate-900 placeholder:text-slate-400 focus:ring-0 text-sm"
                 placeholder="Buscar chamados, inspeções..."
                 type="search"
                 name="search"
@@ -69,22 +77,27 @@ export function Header() {
             </div>
           </div>
         </div>
+
+        {/* Mobile: show app name */}
+        <div className="flex sm:hidden items-center flex-1">
+          <span className="text-lg font-black text-slate-900">Condo<span className="text-indigo-600">Ops</span></span>
+        </div>
       </div>
 
       {/* Notification Bell */}
-      <div className="ml-4 flex items-center md:ml-6 relative" ref={panelRef}>
+      <div className="ml-2 sm:ml-4 flex items-center relative" ref={panelRef}>
         <button
           type="button"
           onClick={() => setShowPanel(!showPanel)}
-          className="relative rounded-full bg-white p-1.5 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+          className="relative rounded-full bg-white p-1.5 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
         >
           <span className="sr-only">Ver notificações</span>
-          <Bell className="h-6 w-6" aria-hidden="true" />
+          <Bell className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
           {unreadCount > 0 && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-5 w-5 rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white"
+              className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-red-500 text-[9px] sm:text-[10px] font-bold text-white ring-2 ring-white"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
             </motion.span>
@@ -99,10 +112,10 @@ export function Header() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="absolute top-12 right-0 w-96 max-h-[500px] bg-white rounded-2xl shadow-2xl ring-1 ring-slate-200 overflow-hidden z-50"
+              className="absolute top-12 right-0 w-[calc(100vw-1.5rem)] sm:w-96 max-h-[70vh] sm:max-h-[500px] bg-white rounded-2xl shadow-2xl ring-1 ring-slate-200 overflow-hidden z-50"
             >
               {/* Panel Header */}
-              <div className="flex items-center justify-between p-4 border-b border-slate-100">
+              <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-100">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Notificações</h3>
                   <p className="text-[10px] text-slate-400">{unreadCount > 0 ? `${unreadCount} não lida${unreadCount > 1 ? 's' : ''}` : 'Tudo em dia'}</p>
@@ -125,7 +138,7 @@ export function Header() {
               </div>
 
               {/* Notification List */}
-              <div className="overflow-y-auto max-h-[400px] divide-y divide-slate-50">
+              <div className="overflow-y-auto max-h-[60vh] sm:max-h-[400px] divide-y divide-slate-50">
                 {notifications.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 px-4">
                     <div className="h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
@@ -142,10 +155,10 @@ export function Header() {
                       <button
                         key={notif.id}
                         onClick={() => markAsRead(notif.id)}
-                        className={`w-full flex items-start gap-3 p-4 text-left transition-all hover:bg-slate-50 ${!notif.read ? 'bg-indigo-50/30' : ''}`}
+                        className={`w-full flex items-start gap-3 p-3 sm:p-4 text-left transition-all hover:bg-slate-50 ${!notif.read ? 'bg-indigo-50/30' : ''}`}
                       >
-                        <div className={`flex-shrink-0 h-9 w-9 rounded-xl flex items-center justify-center ${config.bg}`}>
-                          <IconComponent className={`h-4 w-4 ${config.color}`} />
+                        <div className={`flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center ${config.bg}`}>
+                          <IconComponent className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${config.color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
@@ -170,3 +183,4 @@ export function Header() {
     </header>
   )
 }
+
