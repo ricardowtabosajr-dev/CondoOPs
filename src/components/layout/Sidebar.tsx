@@ -10,7 +10,8 @@ import {
   Settings,
   Building2,
   LogOut,
-  ShieldAlert
+  ShieldAlert,
+  X,
 } from "lucide-react"
 import { useAuth } from "@/src/context/AuthContext"
 import { toast } from "sonner"
@@ -24,13 +25,15 @@ const navigation = [
   { name: 'Configurações', href: '/settings', icon: Settings, permission: 'settings' },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void
+}
+
+export function Sidebar({ onClose }: SidebarProps) {
   const location = useLocation()
   const { user, logout } = useAuth()
 
   const userPermissions = user?.permissions || []
-
-  // Filter navigation items based on user permissions
   const allowedNavigation = navigation.filter(item => userPermissions.includes(item.permission))
 
   const handleLogout = () => {
@@ -38,13 +41,25 @@ export function Sidebar() {
     setTimeout(() => logout(), 500)
   }
 
+  const handleNavigate = () => {
+    // Close sidebar on mobile after navigation
+    if (onClose) onClose()
+  }
+
   return (
     <div className="flex h-full w-64 flex-col bg-white border-r border-slate-200">
-      <div className="flex h-20 items-center px-6 border-b border-slate-50">
-        <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-100 mr-2.5">
-          <Building2 className="h-5 w-5 text-white" />
+      <div className="flex h-20 items-center justify-between px-6 border-b border-slate-50">
+        <div className="flex items-center">
+          <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-100 mr-2.5">
+            <Building2 className="h-5 w-5 text-white" />
+          </div>
+          <span className="text-xl font-black text-slate-900 tracking-tight">Condo<span className="text-indigo-600">Ops</span></span>
         </div>
-        <span className="text-xl font-black text-slate-900 tracking-tight">Condo<span className="text-indigo-600">Ops</span></span>
+        {onClose && (
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all lg:hidden">
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto py-6 px-4">
@@ -55,6 +70,7 @@ export function Sidebar() {
               <Link
                 key={item.name}
                 to={item.href}
+                onClick={handleNavigate}
                 className={cn(
                   "group relative flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all focus:outline-none",
                   isActive
@@ -91,22 +107,22 @@ export function Sidebar() {
       </div>
 
       <div className="p-4 mt-auto">
-        <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+        <div className="rounded-2xl bg-slate-50 p-3 border border-slate-100">
           <div className="flex items-center">
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               <div className="h-10 w-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-black text-sm border-2 border-white">
                 {user?.initials || 'SA'}
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white" />
             </div>
-            <div className="ml-3 truncate">
+            <div className="ml-3 min-w-0 flex-1">
               <p className="text-sm font-bold text-slate-900 truncate">{user?.name || 'Usuário'}</p>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{user?.role || 'Operador'}</p>
             </div>
             <button
               onClick={handleLogout}
               title="Sair do Sistema"
-              className="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all active:scale-90"
+              className="ml-2 flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all active:scale-90"
             >
               <LogOut className="h-4 w-4" />
             </button>
