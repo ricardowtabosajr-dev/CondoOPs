@@ -16,6 +16,7 @@ interface DataContextType {
 
     tickets: any[]
     addTicket: (ticket: any) => void
+    updateTicket: (id: string, updates: any) => Promise<void>
     removeTicket: (id: string) => void
 
     equipments: any[]
@@ -93,6 +94,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!error) setTickets(prev => prev.filter(t => t.id !== id))
     }
 
+    const updateTicket = async (id: string, updates: any) => {
+        const dbUpdates: any = { updated_at: new Date().toISOString() }
+        if (updates.status) dbUpdates.status = updates.status
+        if (updates.priority) dbUpdates.priority = updates.priority
+        if (updates.title) dbUpdates.title = updates.title
+        if (updates.description) dbUpdates.description = updates.description
+
+        const { error } = await supabase.from('tickets').update(dbUpdates).eq('id', id)
+        if (!error) {
+            setTickets(prev => prev.map(t => t.id === id ? { ...t, ...updates, updatedAt: dbUpdates.updated_at } : t))
+        } else {
+            console.error('Erro ao atualizar chamado:', error)
+        }
+    }
+
     // ─── Equipments ───
     const addEquipment = async (eq: any) => {
         const { error } = await supabase.from('equipments').insert({
@@ -149,7 +165,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return (
         <DataContext.Provider value={{
             inspections, addInspection, removeInspection,
-            tickets, addTicket, removeTicket,
+            tickets, addTicket, updateTicket, removeTicket,
             equipments, addEquipment, removeEquipment,
             transactions, addTransaction, loading,
         }}>

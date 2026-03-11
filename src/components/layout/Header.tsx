@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Bell, Search, Menu, Check, CheckCheck, Trash2, X, AlertTriangle, ClipboardCheck, Wrench, FileText, UserPlus, Info } from "lucide-react"
 import { useNotifications, type AppNotification } from "@/src/context/NotificationContext"
+import { useAuth } from "@/src/context/AuthContext"
 import { motion, AnimatePresence } from "motion/react"
 
 const typeConfig: Record<string, { icon: typeof Bell; color: string; bg: string }> = {
@@ -28,6 +29,8 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotifications()
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'Administrador'
   const [showPanel, setShowPanel] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -84,103 +87,104 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
       </div>
 
-      {/* Notification Bell */}
-      <div className="ml-2 sm:ml-4 flex items-center relative" ref={panelRef}>
-        <button
-          type="button"
-          onClick={() => setShowPanel(!showPanel)}
-          className="relative rounded-full bg-white p-1.5 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
-        >
-          <span className="sr-only">Ver notificações</span>
-          <Bell className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-          {unreadCount > 0 && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-red-500 text-[9px] sm:text-[10px] font-bold text-white ring-2 ring-white"
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </motion.span>
-          )}
-        </button>
+      {/* Notification Bell - only for Admins */}
+      {isAdmin && (
+        <div className="ml-2 sm:ml-4 flex items-center relative" ref={panelRef}>
+          <button
+            type="button"
+            onClick={() => setShowPanel(!showPanel)}
+            className="relative rounded-full bg-white p-1.5 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+          >
+            <span className="sr-only">Ver notificações</span>
+            <Bell className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
+            {unreadCount > 0 && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-red-500 text-[9px] sm:text-[10px] font-bold text-white ring-2 ring-white"
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </motion.span>
+            )}
+          </button>
 
-        {/* Notification Panel */}
-        <AnimatePresence>
-          {showPanel && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="absolute top-12 right-0 w-[calc(100vw-1.5rem)] sm:w-96 max-h-[70vh] sm:max-h-[500px] bg-white rounded-2xl shadow-2xl ring-1 ring-slate-200 overflow-hidden z-50"
-            >
-              {/* Panel Header */}
-              <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-100">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">Notificações</h3>
-                  <p className="text-[10px] text-slate-400">{unreadCount > 0 ? `${unreadCount} não lida${unreadCount > 1 ? 's' : ''}` : 'Tudo em dia'}</p>
-                </div>
-                <div className="flex items-center gap-1">
-                  {unreadCount > 0 && (
-                    <button onClick={markAllAsRead} className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all" title="Marcar tudo como lido">
-                      <CheckCheck className="h-4 w-4" />
-                    </button>
-                  )}
-                  {notifications.length > 0 && (
-                    <button onClick={clearAll} className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Limpar tudo">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                  <button onClick={() => setShowPanel(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Notification List */}
-              <div className="overflow-y-auto max-h-[60vh] sm:max-h-[400px] divide-y divide-slate-50">
-                {notifications.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 px-4">
-                    <div className="h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
-                      <Bell className="h-6 w-6 text-slate-300" />
-                    </div>
-                    <p className="text-sm font-semibold text-slate-400">Nenhuma notificação</p>
-                    <p className="text-[10px] text-slate-300 mt-1">As ações dos operadores aparecerão aqui.</p>
+          {/* Notification Panel */}
+          <AnimatePresence>
+            {showPanel && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-12 right-0 w-[calc(100vw-1.5rem)] sm:w-96 max-h-[70vh] sm:max-h-[500px] bg-white rounded-2xl shadow-2xl ring-1 ring-slate-200 overflow-hidden z-50"
+              >
+                {/* Panel Header */}
+                <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Notificações</h3>
+                    <p className="text-[10px] text-slate-400">{unreadCount > 0 ? `${unreadCount} não lida${unreadCount > 1 ? 's' : ''}` : 'Tudo em dia'}</p>
                   </div>
-                ) : (
-                  notifications.map((notif) => {
-                    const config = typeConfig[notif.type] || typeConfig.system
-                    const IconComponent = config.icon
-                    return (
-                      <button
-                        key={notif.id}
-                        onClick={() => markAsRead(notif.id)}
-                        className={`w-full flex items-start gap-3 p-3 sm:p-4 text-left transition-all hover:bg-slate-50 ${!notif.read ? 'bg-indigo-50/30' : ''}`}
-                      >
-                        <div className={`flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center ${config.bg}`}>
-                          <IconComponent className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${config.color}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs font-bold text-slate-900 truncate">{notif.title}</p>
-                            <span className="text-[10px] text-slate-400 flex-shrink-0 ml-2">{timeAgo(notif.createdAt)}</span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{notif.message}</p>
-                          <p className="text-[10px] text-slate-400 mt-1">por <span className="font-semibold">{notif.actionBy}</span> · {notif.actionByRole}</p>
-                        </div>
-                        {!notif.read && (
-                          <div className="flex-shrink-0 h-2 w-2 rounded-full bg-indigo-500 mt-2" />
-                        )}
+                  <div className="flex items-center gap-1">
+                    {unreadCount > 0 && (
+                      <button onClick={markAllAsRead} className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all" title="Marcar tudo como lido">
+                        <CheckCheck className="h-4 w-4" />
                       </button>
-                    )
-                  })
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                    )}
+                    {notifications.length > 0 && (
+                      <button onClick={clearAll} className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Limpar tudo">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button onClick={() => setShowPanel(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Notification List */}
+                <div className="overflow-y-auto max-h-[60vh] sm:max-h-[400px] divide-y divide-slate-50">
+                  {notifications.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 px-4">
+                      <div className="h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
+                        <Bell className="h-6 w-6 text-slate-300" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-400">Nenhuma notificação</p>
+                      <p className="text-[10px] text-slate-300 mt-1">As ações dos operadores aparecerão aqui.</p>
+                    </div>
+                  ) : (
+                    notifications.map((notif) => {
+                      const config = typeConfig[notif.type] || typeConfig.system
+                      const IconComponent = config.icon
+                      return (
+                        <button
+                          key={notif.id}
+                          onClick={() => markAsRead(notif.id)}
+                          className={`w-full flex items-start gap-3 p-3 sm:p-4 text-left transition-all hover:bg-slate-50 ${!notif.read ? 'bg-indigo-50/30' : ''}`}
+                        >
+                          <div className={`flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center ${config.bg}`}>
+                            <IconComponent className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${config.color}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-bold text-slate-900 truncate">{notif.title}</p>
+                              <span className="text-[10px] text-slate-400 flex-shrink-0 ml-2">{timeAgo(notif.createdAt)}</span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{notif.message}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">por <span className="font-semibold">{notif.actionBy}</span> · {notif.actionByRole}</p>
+                          </div>
+                          {!notif.read && (
+                            <div className="flex-shrink-0 h-2 w-2 rounded-full bg-indigo-500 mt-2" />
+                          )}
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </header>
   )
 }
-

@@ -138,25 +138,7 @@ export function LoginPage() {
                         </button>
                     </form>
 
-                    <div className="mt-6 pt-5 border-t border-slate-100">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center mb-3">Contas disponíveis</p>
-                        <div className="space-y-2">
-                            {systemUsers.filter(u => u.status === 'active').map((acc, i) => (
-                                <button
-                                    key={i}
-                                    type="button"
-                                    onClick={() => { setEmail(acc.email); setPassword(acc.password); }}
-                                    className="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-indigo-50 hover:border-indigo-200 transition-all group text-left"
-                                >
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-700 group-hover:text-indigo-700">{acc.name} <span className="font-normal text-slate-400">({acc.role})</span></p>
-                                        <p className="text-[10px] text-slate-400">{acc.email}</p>
-                                    </div>
-                                    <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+
                 </motion.div>
 
                 <p className="text-center text-[10px] text-slate-400 mt-6">

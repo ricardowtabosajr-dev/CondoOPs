@@ -35,31 +35,66 @@ export const generateInspectionPDF = (inspection: any) => {
         headStyles: { fillColor: [79, 70, 229] },
     });
 
-    // Items Table
+    // Items Table - use real areas from inspection
     doc.setFontSize(14);
     doc.setTextColor(30, 41, 59); // Slate 800
     const currentY = (doc as any).lastAutoTable.finalY + 15;
-    doc.text('Itens Verificados', 14, currentY);
+    doc.text('Areas Inspecionadas', 14, currentY);
+
+    const statusLabels: Record<string, string> = { ok: 'Conforme', nok: 'Nao Conforme', na: 'N/A' }
+
+    // Build items from areas, items, or fallback
+    let itemRows: string[][] = []
+    if (inspection.areas && inspection.areas.length > 0) {
+        // New format: areas is array of strings or objects
+        itemRows = inspection.areas.map((area: any) => {
+            if (typeof area === 'string') {
+                return [area, inspection.status === 'completed' ? 'Conforme' : 'Pendente']
+            }
+            return [area.name || area, statusLabels[area.status] || 'Pendente']
+        })
+    } else if (inspection.items && inspection.items.length > 0) {
+        itemRows = inspection.items.map((it: any) => [
+            it.description || it.category || it.name || 'Item',
+            statusLabels[it.status] || (it.status === 'ok' ? 'Conforme' : it.status === 'nok' ? 'Nao Conforme' : 'Pendente')
+        ])
+    } else {
+        itemRows = [['Nenhuma area registrada', '-']]
+    }
 
     autoTable(doc, {
         startY: currentY + 5,
-        head: [['Item de Verificacao', 'Resultado']],
-        body: [
-            ['Estrutura Geral', 'Conforme'],
-            ['Limpeza Profunda', 'Conforme'],
-            ['Equipamentos de Seguranca', 'Conforme'],
-            ['Sinalizacao', 'Conforme'],
-        ].map(item => [item[0], item[1]]),
+        head: [['Area / Item de Verificacao', 'Resultado']],
+        body: itemRows,
         styles: { fontSize: 10 },
         headStyles: { fillColor: [71, 85, 105] }, // Slate 600
+        bodyStyles: { textColor: [30, 41, 59] },
+        didParseCell: (data: any) => {
+            if (data.section === 'body' && data.column.index === 1) {
+                const val = data.cell.raw;
+                if (val === 'Conforme') data.cell.styles.textColor = [16, 185, 129];
+                else if (val === 'Nao Conforme') data.cell.styles.textColor = [239, 68, 68];
+                else if (val === 'Pendente') data.cell.styles.textColor = [245, 158, 11];
+            }
+        },
     });
 
-    // Footer or Notes
+    // Summary
+    const nonConformeCount = itemRows.filter(r => r[1] === 'Nao Conforme').length
+    const pendingCount = itemRows.filter(r => r[1] === 'Pendente').length
+
     const finalY = (doc as any).lastAutoTable.finalY + 15;
     doc.setFontSize(10);
-    doc.text('Observacoes:', 14, finalY);
-    doc.setFont('helvetica', 'italic');
-    doc.text('Nenhuma irregularidade critica encontrada durante esta vistoria.', 14, finalY + 7);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo:', 14, finalY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Total de areas: ${itemRows.length}  |  Conformes: ${itemRows.filter(r => r[1] === 'Conforme').length}  |  Nao Conformes: ${nonConformeCount}  |  Pendentes: ${pendingCount}`, 14, finalY + 7);
+
+    if (nonConformeCount > 0) {
+        doc.setTextColor(239, 68, 68);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`ATENCAO: ${nonConformeCount} area(s) com nao conformidade identificada(s).`, 14, finalY + 17);
+    }
 
     // Open for Printing
     const blob = doc.output('blob');

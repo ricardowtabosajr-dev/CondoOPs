@@ -6,7 +6,7 @@ import { Badge } from "@/src/components/ui/Badge"
 import { Modal } from "@/src/components/ui/Modal"
 import { motion } from "motion/react"
 import { toast } from "sonner"
-import { Plus, Search, Filter, AlertTriangle, CheckCircle2, Clock, ExternalLink, Eye, Send, X } from "lucide-react"
+import { Plus, Search, Filter, AlertTriangle, CheckCircle2, Clock, ExternalLink, Eye, Send, X, PlayCircle, XCircle, RotateCcw, Trash2 } from "lucide-react"
 import { useData } from "@/src/context/DataContext"
 import { useNotifications } from "@/src/context/NotificationContext"
 import { useAuth } from "@/src/context/AuthContext"
@@ -21,7 +21,7 @@ const item = {
 }
 
 export function Tickets() {
-  const { tickets, addTicket } = useData()
+  const { tickets, addTicket, updateTicket, removeTicket } = useData()
   const { addNotification } = useNotifications()
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
@@ -29,6 +29,7 @@ export function Tickets() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [resolutionNote, setResolutionNote] = useState('')
 
   const [newTicket, setNewTicket] = useState({
     title: '',
@@ -92,7 +93,38 @@ export function Tickets() {
 
   const handleViewTicket = (ticket: any) => {
     setSelectedTicket(ticket)
+    setResolutionNote(ticket.resolution || '')
     setIsViewModalOpen(true)
+  }
+
+  const handleChangeStatus = async (ticketId: string, newStatus: string, resolution?: string) => {
+    const updates: any = { status: newStatus }
+    if (resolution) updates.resolution = resolution
+    await updateTicket(ticketId, updates)
+    // Update selected ticket in modal
+    if (selectedTicket && selectedTicket.id === ticketId) {
+      setSelectedTicket({ ...selectedTicket, status: newStatus, resolution: resolution || selectedTicket.resolution })
+    }
+    const statusLabels: Record<string, string> = { open: 'Aberto', in_progress: 'Em Andamento', resolved: 'Resolvido' }
+    toast.success(`Status atualizado para: ${statusLabels[newStatus]}`)
+
+    if (user && user.role !== 'Administrador') {
+      const ticket = tickets.find(t => t.id === ticketId)
+      addNotification({
+        title: newStatus === 'resolved' ? 'Chamado Encerrado' : newStatus === 'in_progress' ? 'Chamado em Atendimento' : 'Chamado Reaberto',
+        message: `"${ticket?.title || ticketId}" — Status: ${statusLabels[newStatus]}${resolution ? ` | Resolução: ${resolution}` : ''}`,
+        type: 'ticket',
+        actionBy: user.name,
+        actionByRole: user.role,
+      })
+    }
+  }
+
+  const handleDeleteTicket = async (ticketId: string) => {
+    await removeTicket(ticketId)
+    setIsViewModalOpen(false)
+    setSelectedTicket(null)
+    toast.success('Chamado removido com sucesso.')
   }
 
   const kpiStats = [
@@ -182,18 +214,94 @@ export function Tickets() {
               </div>
             </div>
             <div className="pt-4 border-t border-slate-100">
-              <p className="text-sm font-bold text-slate-900 mb-3 text-left">Histórico de Interações</p>
-              <div className="flex gap-3">
-                <div className="h-6 w-6 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center"><Clock className="h-3 w-3 text-slate-400" /></div>
-                <div>
-                  <p className="text-xs font-bold text-slate-700 text-left">Chamado aberto no sistema</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5 text-left">{new Date(selectedTicket.createdAt).toLocaleDateString('pt-BR')}</p>
+              <p className="text-sm font-bold text-slate-900 mb-3 text-left">Alterar Status</p>
+
+              {/* Campo de resolução - aparece quando em atendimento ou aberto */}
+              {selectedTicket.status !== 'resolved' && (
+                <div className="mb-3">
+                  <label className="text-xs font-bold text-slate-500 mb-1.5 block text-left">Resumo da Ação Corretiva</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Descreva o que foi feito para resolver o chamado..."
+                    value={resolutionNote}
+                    onChange={(e) => setResolutionNote(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all resize-none"
+                  />
                 </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {selectedTicket.status !== 'in_progress' && selectedTicket.status !== 'resolved' && (
+                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white font-bold" onClick={() => handleChangeStatus(selectedTicket.id, 'in_progress')}>
+                    <PlayCircle className="h-4 w-4 mr-1.5" /> Iniciar Atendimento
+                  </Button>
+                )}
+                {selectedTicket.status !== 'resolved' && (
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold" onClick={() => {
+                    if (!resolutionNote.trim()) {
+                      toast.error('Preencha o resumo da ação corretiva antes de encerrar.')
+                      return
+                    }
+                    handleChangeStatus(selectedTicket.id, 'resolved', resolutionNote.trim())
+                  }}>
+                    <CheckCircle2 className="h-4 w-4 mr-1.5" /> Encerrar Chamado
+                  </Button>
+                )}
+                {selectedTicket.status === 'resolved' && user?.role === 'Administrador' && (
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold" onClick={() => handleChangeStatus(selectedTicket.id, 'open')}>
+                    <RotateCcw className="h-4 w-4 mr-1.5" /> Reabrir Chamado
+                  </Button>
+                )}
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-              <Button variant="outline" className="text-slate-600" onClick={() => setIsViewModalOpen(false)}>Fechar</Button>
-              <Button className="bg-indigo-600 hover:bg-indigo-700 font-bold" onClick={() => { setIsViewModalOpen(false); toast.success('Atualizando status do chamado...'); }}>Editar Chamado</Button>
+
+            {/* Resolução (se existir) */}
+            {(selectedTicket.resolution || resolutionNote) && selectedTicket.status === 'resolved' && (
+              <div className="pt-4 border-t border-slate-100">
+                <p className="text-sm font-bold text-slate-900 mb-2 text-left">Resolução</p>
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                  <p className="text-xs text-emerald-800 leading-relaxed text-left">{selectedTicket.resolution || resolutionNote}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-slate-100">
+              <p className="text-sm font-bold text-slate-900 mb-3 text-left">Histórico</p>
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <div className="h-6 w-6 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center"><Clock className="h-3 w-3 text-slate-400" /></div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-700 text-left">Chamado aberto no sistema</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 text-left">{new Date(selectedTicket.createdAt).toLocaleDateString('pt-BR')}</p>
+                  </div>
+                </div>
+                {selectedTicket.status === 'in_progress' && (
+                  <div className="flex gap-3">
+                    <div className="h-6 w-6 rounded-full bg-amber-100 flex-shrink-0 flex items-center justify-center"><PlayCircle className="h-3 w-3 text-amber-500" /></div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-700 text-left">Atendimento iniciado</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 text-left">{new Date(selectedTicket.updatedAt || Date.now()).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                  </div>
+                )}
+                {selectedTicket.status === 'resolved' && (
+                  <div className="flex gap-3">
+                    <div className="h-6 w-6 rounded-full bg-emerald-100 flex-shrink-0 flex items-center justify-center"><CheckCircle2 className="h-3 w-3 text-emerald-500" /></div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-700 text-left">Chamado encerrado</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 text-left">{new Date(selectedTicket.updatedAt || Date.now()).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-between gap-3 pt-4 border-t border-slate-100">
+              {user?.role === 'Administrador' && (
+                <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50" onClick={() => handleDeleteTicket(selectedTicket.id)}>
+                  <Trash2 className="h-4 w-4 mr-1.5" /> Excluir
+                </Button>
+              )}
+              <Button variant="outline" className="text-slate-600 ml-auto" onClick={() => setIsViewModalOpen(false)}>Fechar</Button>
             </div>
           </div>
         )}
@@ -262,8 +370,16 @@ export function Tickets() {
                     <TableCell className="text-right text-sm text-slate-500">{new Date(ticket.createdAt).toLocaleDateString('pt-BR')}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 group-hover:text-indigo-600 transition-colors" onClick={() => handleViewTicket(ticket)}><Eye className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 group-hover:text-indigo-600 transition-colors" onClick={() => toast.info('Acessando link externo')}><ExternalLink className="h-4 w-4" /></Button>
+                        {ticket.status === 'open' && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500 hover:bg-amber-50" title="Iniciar Atendimento" onClick={() => handleChangeStatus(ticket.id, 'in_progress')}><PlayCircle className="h-4 w-4" /></Button>
+                        )}
+                        {ticket.status !== 'resolved' && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:bg-emerald-50" title="Encerrar Chamado" onClick={() => handleChangeStatus(ticket.id, 'resolved')}><CheckCircle2 className="h-4 w-4" /></Button>
+                        )}
+                        {ticket.status === 'resolved' && user?.role === 'Administrador' && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-500 hover:bg-indigo-50" title="Reabrir" onClick={() => handleChangeStatus(ticket.id, 'open')}><RotateCcw className="h-4 w-4" /></Button>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600" onClick={() => handleViewTicket(ticket)}><Eye className="h-4 w-4" /></Button>
                       </div>
                     </TableCell>
                   </motion.tr>
