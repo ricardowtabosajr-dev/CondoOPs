@@ -98,7 +98,7 @@ export function Dashboard() {
   }
 
   const kpiCards = [
-    { title: "Conformidade", value: "95%", icon: Activity, trend: "+2%", color: "text-emerald-500", bg: "bg-emerald-50", trendColor: "text-emerald-600", path: "/inspections" },
+    { title: "Conformidade", value: "0%", icon: Activity, trend: "0%", color: "text-emerald-500", bg: "bg-emerald-50", trendColor: "text-emerald-600", path: "/inspections" },
     { title: "Chamados Abertos", value: openTickets.length, icon: AlertTriangle, trend: `${tickets.filter(t => t.priority === 'high').length} críticos`, color: "text-amber-500", bg: "bg-amber-50", trendColor: "text-amber-600", path: "/tickets" },
     { title: "Inspeções Pendentes", value: inspections.length, icon: Clock, trend: `${inspections.filter(i => i.status === 'draft').length} rascunhos`, color: "text-indigo-500", bg: "bg-indigo-50", trendColor: "text-slate-500", path: "/inspections" },
     { title: "Manutenções Ativas", value: criticalEquipments.length, icon: Wrench, trend: `${equipments.length} ativos no total`, color: "text-slate-600", bg: "bg-slate-100", trendColor: "text-slate-500", path: "/maintenance" },

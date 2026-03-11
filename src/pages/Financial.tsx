@@ -23,10 +23,10 @@ const item = {
 }
 
 const categoryData = [
-  { name: 'Preventiva', value: 45, color: '#10b981' },
-  { name: 'Corretiva', value: 35, color: '#ef4444' },
-  { name: 'Inspeções', value: 10, color: '#6366f1' },
-  { name: 'Outros', value: 10, color: '#94a3b8' },
+  { name: 'Preventiva', value: 0, color: '#10b981' },
+  { name: 'Corretiva', value: 0, color: '#ef4444' },
+  { name: 'Inspeções', value: 0, color: '#6366f1' },
+  { name: 'Outros', value: 0, color: '#94a3b8' },
 ]
 
 export function Financial() {
@@ -104,10 +104,10 @@ export function Financial() {
   });
 
   const kpis = [
-    { label: "Orçamento Mensal", value: "R$ 15.000", trend: "+5%", icon: Wallet, color: "text-indigo-600", bg: "bg-indigo-50", type: null },
-    { label: "Total Gasto", value: "R$ 12.450", trend: "-2%", icon: ArrowDownRight, color: "text-red-600", bg: "bg-red-50", type: 'out' },
-    { label: "Receitas", value: "R$ 14.200", trend: "+8%", icon: ArrowUpRight, color: "text-emerald-600", bg: "bg-emerald-50", type: 'in' },
-    { label: "Reserva Emergência", value: "R$ 45.000", trend: "Meta: 100%", icon: DollarSign, color: "text-slate-600", bg: "bg-slate-100", type: null },
+    { label: "Orçamento Mensal", value: "R$ 0", trend: "0%", icon: Wallet, color: "text-indigo-600", bg: "bg-indigo-50", type: null },
+    { label: "Total Gasto", value: "R$ 0", trend: "0%", icon: ArrowDownRight, color: "text-red-600", bg: "bg-red-50", type: 'out' },
+    { label: "Receitas", value: "R$ 0", trend: "0%", icon: ArrowUpRight, color: "text-emerald-600", bg: "bg-emerald-50", type: 'in' },
+    { label: "Reserva Emergência", value: "R$ 0", trend: "Meta: 0%", icon: DollarSign, color: "text-slate-600", bg: "bg-slate-100", type: null },
   ]
 
   return (

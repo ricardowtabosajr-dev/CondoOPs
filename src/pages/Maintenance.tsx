@@ -155,10 +155,7 @@ export function Maintenance() {
       <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} title="Histórico de Manutenções">
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
           {[
-            { date: '25/10/2023', eq: 'Bomba 02', type: 'Reparo', tech: 'João Silva' },
-            { date: '12/10/2023', eq: 'Elevador A', type: 'Preventiva', tech: 'Otis Tech' },
-            { date: '05/10/2023', eq: 'Portão G1', type: 'Ajuste', tech: 'Carlos M.' },
-            { date: '28/09/2023', eq: 'Gerador', type: 'Teste', tech: 'Eng. Roberto' },
+            // Dados de histórico serão carregados dinamicamente via banco de dados
           ].map((h, i) => (
             <div key={i} className="flex flex-col p-3 rounded-xl bg-slate-50 border border-slate-100">
               <div className="flex justify-between items-start mb-2">
