@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.tickets (
   description TEXT DEFAULT '',
   status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved')),
   priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('high', 'medium', 'low')),
+  inspection_id TEXT, -- Vínculo com a inspeção que gerou o chamado
   created_by TEXT REFERENCES public.system_users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

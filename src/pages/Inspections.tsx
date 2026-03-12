@@ -163,6 +163,7 @@ export function Inspections() {
           const ticketId = `CH-${String(1000 + Math.floor(Math.random() * 9000))}`
           addTicket({
             id: ticketId,
+            inspectionId: id, // Passando o ID da inspeção para vincular
             title: `Não conformidade: ${area.name}`,
             description: `Identificado na inspeção ${id}. Área "${area.name}" registrada como Não Conforme.${area.observation ? ` Obs: ${area.observation}` : ''}`,
             status: 'open',

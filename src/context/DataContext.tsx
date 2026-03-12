@@ -10,10 +10,6 @@ export interface Transaction {
 }
 
 interface DataContextType {
-    inspections: any[]
-    addInspection: (insp: any) => void
-    removeInspection: (id: string) => void
-
     tickets: any[]
     addTicket: (ticket: any) => void
     updateTicket: (id: string, updates: any) => Promise<void>
@@ -22,6 +18,11 @@ interface DataContextType {
     equipments: any[]
     addEquipment: (eq: any) => void
     removeEquipment: (id: string) => void
+
+    inspections: any[]
+    addInspection: (insp: any) => void
+    updateInspection: (id: string, updates: any) => Promise<void>
+    removeInspection: (id: string) => void
 
     transactions: Transaction[]
     addTransaction: (txn: Transaction) => void
@@ -52,6 +53,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             if (ticketsRes.data) setTickets(ticketsRes.data.map(t => ({
                 id: t.id, title: t.title, description: t.description,
                 status: t.status, priority: t.priority,
+                inspectionId: t.inspection_id,
                 createdAt: t.created_at, updatedAt: t.updated_at,
             })))
 
@@ -84,6 +86,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             description: ticket.description || '',
             status: ticket.status,
             priority: ticket.priority,
+            inspection_id: ticket.inspectionId,
         })
         if (!error) setTickets(prev => [ticket, ...prev])
         else console.error('Erro ao criar chamado:', error)
@@ -100,10 +103,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (updates.priority) dbUpdates.priority = updates.priority
         if (updates.title) dbUpdates.title = updates.title
         if (updates.description) dbUpdates.description = updates.description
+        if (updates.resolution) dbUpdates.resolution = updates.resolution
 
         const { error } = await supabase.from('tickets').update(dbUpdates).eq('id', id)
         if (!error) {
             setTickets(prev => prev.map(t => t.id === id ? { ...t, ...updates, updatedAt: dbUpdates.updated_at } : t))
+
+            // Lógica de encerramento automático da inspeção
+            if (updates.status === 'resolved') {
+                const ticket = tickets.find(t => t.id === id)
+                if (ticket?.inspectionId) {
+                    await updateInspection(ticket.inspectionId, { status: 'completed', score: 100 })
+                }
+            }
         } else {
             console.error('Erro ao atualizar chamado:', error)
         }
@@ -144,6 +156,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
         else console.error('Erro ao criar inspeção:', error)
     }
 
+    const updateInspection = async (id: string, updates: any) => {
+        const { error } = await supabase.from('inspections').update(updates).eq('id', id)
+        if (!error) {
+            setInspections(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
+            console.log(`Inspeção ${id} atualizada com sucesso pelo vínculo do chamado.`)
+        } else {
+            console.error('Erro ao atualizar inspeção:', error)
+        }
+    }
+
     const removeInspection = async (id: string) => {
         const { error } = await supabase.from('inspections').delete().eq('id', id)
         if (!error) setInspections(prev => prev.filter(i => i.id !== id))
@@ -164,7 +186,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     return (
         <DataContext.Provider value={{
-            inspections, addInspection, removeInspection,
+            inspections, addInspection, updateInspection, removeInspection,
             tickets, addTicket, updateTicket, removeTicket,
             equipments, addEquipment, removeEquipment,
             transactions, addTransaction, loading,
