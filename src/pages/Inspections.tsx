@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/src/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/Card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/Table"
@@ -43,6 +43,12 @@ export function Inspections() {
   const [filterType, setFilterType] = useState('all')
   const [filterPeriod, setFilterPeriod] = useState('all')
   const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({})
+
+  useEffect(() => {
+    if (isModalOpen && user) {
+      setNewInspection(prev => ({ ...prev, inspector: user.name }))
+    }
+  }, [isModalOpen, user])
 
   const defaultAreas: InspectionArea[] = []
 
