@@ -62,11 +62,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 status: e.status, lastMaintenance: e.last_maintenance, nextMaintenance: e.next_maintenance,
             })))
 
-            if (inspectionsRes.data) setInspections(inspectionsRes.data.map(i => ({
-                id: i.id, inspector: i.inspector, type: i.type,
-                periodicity: i.periodicity, date: i.date,
-                status: i.status, score: i.score, areas: i.areas || [],
-            })))
+            if (inspectionsRes.data) setInspections(inspectionsRes.data.map(i => {
+                let parsedAreas = []
+                try {
+                    parsedAreas = i.areas ? i.areas.map((a: any) => {
+                        if (typeof a === 'string' && (a.startsWith('{') || a.startsWith('['))) {
+                            return JSON.parse(a)
+                        }
+                        return a
+                    }) : []
+                } catch (e) {
+                    console.error("Erro ao processar áreas da inspeção:", e)
+                    parsedAreas = Array.isArray(i.areas) ? i.areas : []
+                }
+
+                return {
+                    id: i.id, inspector: i.inspector, type: i.type,
+                    periodicity: i.periodicity, date: i.date,
+                    status: i.status, score: i.score, areas: parsedAreas,
+                }
+            }))
 
             if (transactionsRes.data) setTransactions(transactionsRes.data.map(t => ({
                 date: t.date, desc: t.description, cat: t.category,

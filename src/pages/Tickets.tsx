@@ -21,7 +21,7 @@ const item = {
 }
 
 export function Tickets() {
-  const { tickets, addTicket, updateTicket, removeTicket } = useData()
+  const { tickets, addTicket, updateTicket, removeTicket, inspections } = useData()
   const { addNotification } = useNotifications()
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
@@ -213,6 +213,41 @@ export function Tickets() {
                 </div>
               </div>
             </div>
+
+            {/* Fotos da Inspeção (Se houver) */}
+            {selectedTicket.inspection_id && (
+              <div className="pt-4 border-t border-slate-100">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 text-left">Evidências da Inspeção</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(() => {
+                    const linkedInsp = inspections.find(i => i.id === selectedTicket.inspection_id)
+                    if (!linkedInsp) return <p className="text-[10px] text-slate-400 col-span-2 text-left italic">Inspeção vinculada não encontrada ou removida.</p>
+
+                    // Procurar a área correspondente no array de áreas da inspeção
+                    const titleArea = selectedTicket.title.replace('Não conformidade: ', '').trim()
+                    const area = linkedInsp.areas?.find((a: any) => {
+                      const name = typeof a === 'object' ? a.name : a
+                      return name === titleArea || titleArea.startsWith(name) || name.startsWith(titleArea)
+                    })
+
+                    if (!area || typeof area !== 'object' || !area.photos || area.photos.length === 0) {
+                      return <p className="text-[10px] text-slate-400 col-span-2 text-left italic">Nenhuma foto registrada para esta área na inspeção.</p>
+                    }
+
+                    return area.photos.map((photo: string, idx: number) => (
+                      <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+                        <img src={photo} alt={`Evidência ${idx + 1}`} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button variant="ghost" size="icon" className="text-white h-8 w-8" onClick={() => window.open(photo)}>
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  })()}
+                </div>
+              </div>
+            )}
             <div className="pt-4 border-t border-slate-100">
               <p className="text-sm font-bold text-slate-900 mb-3 text-left">Alterar Status</p>
 

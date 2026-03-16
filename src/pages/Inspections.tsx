@@ -6,7 +6,7 @@ import { Badge } from "@/src/components/ui/Badge"
 import { Modal } from "@/src/components/ui/Modal"
 import { motion } from "motion/react"
 import { toast } from "sonner"
-import { Plus, Search, FileText, Trash2, Eye, CheckCircle2, CalendarDays, SlidersHorizontal, MapPin, ClipboardList, Camera, Image, X } from "lucide-react"
+import { Plus, Search, FileText, Trash2, Eye, CheckCircle2, CalendarDays, SlidersHorizontal, MapPin, ClipboardList, Camera, Image, X, ExternalLink } from "lucide-react"
 import { generateInspectionPDF } from "@/src/lib/pdf-generator"
 import { useData } from "@/src/context/DataContext"
 import { useNotifications } from "@/src/context/NotificationContext"
@@ -148,7 +148,7 @@ export function Inspections() {
       status: evaluatedAreas.length === newInspection.areas.length && evaluatedAreas.length > 0 ? 'completed' : 'draft',
       score,
       periodicity: typeLabels[newInspection.type] || 'Diária',
-      areas: newInspection.areas.map(a => ({ name: a.name, status: a.status, observation: a.observation })),
+      areas: newInspection.areas.map(a => ({ name: a.name, status: a.status, observation: a.observation, photos: a.photos })),
     }
 
     // Find non-conforming areas to auto-generate tickets
@@ -499,14 +499,37 @@ export function Inspections() {
                     }
                     const cfg = statusConfig[status] || statusConfig.pending
                     return (
-                      <div key={idx} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-white">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />
-                          <span className="text-xs font-semibold text-slate-700">{name}</span>
+                      <div key={idx} className="p-3 rounded-xl border border-slate-100 bg-white space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />
+                            <span className="text-xs font-semibold text-slate-700">{name}</span>
+                          </div>
+                          <Badge className={`${cfg.bg} ${cfg.color} border-none text-[10px] font-bold`}>
+                            {cfg.label}
+                          </Badge>
                         </div>
-                        <Badge className={`${cfg.bg} ${cfg.color} border-none text-[10px] font-bold`}>
-                          {cfg.label}
-                        </Badge>
+
+                        {(typeof area === 'object' && area.observation) && (
+                          <p className="text-[11px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100 italic">
+                            "{area.observation}"
+                          </p>
+                        )}
+
+                        {(typeof area === 'object' && area.photos && area.photos.length > 0) && (
+                          <div className="grid grid-cols-3 gap-2 mt-2">
+                            {area.photos.map((photo: string, pIdx: number) => (
+                              <div key={pIdx} className="relative group aspect-square rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
+                                <img src={photo} alt={`Foto ${pIdx + 1}`} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <button onClick={() => window.open(photo)} className="p-1 bg-white rounded-full text-indigo-600 shadow-sm">
+                                    <ExternalLink className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )
                   })
@@ -547,6 +570,7 @@ export function Inspections() {
                         const ticketId = `CH-${String(1000 + Math.floor(Math.random() * 9000))}`
                         addTicket({
                           id: ticketId,
+                          inspectionId: selectedInspection.id,
                           title: `Não conformidade: ${areaName}`,
                           description: `Identificado na inspeção ${selectedInspection.id}. Área "${areaName}" registrada como Não Conforme.`,
                           status: 'open',

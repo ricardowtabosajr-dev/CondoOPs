@@ -188,7 +188,7 @@ export function Settings() {
                 </div>
                 <div className="space-y-2 text-left">
                   <label className="text-sm font-bold text-slate-700">E-mail Corporativo</label>
-                  <input type="email" defaultValue="admin@condovistaazul.com" className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
+                  <input type="email" defaultValue="admin@condoops.com.br" className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
                 </div>
               </div>
             </CardContent>

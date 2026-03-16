@@ -206,7 +206,7 @@ export function Financial() {
             </div>
             <div className="space-y-3">
               <p className="text-sm font-bold text-slate-900 text-left">Composição do Valor</p>
-              {[{ item: 'Contratos Fixos', val: 'R$ 8.500', p: '56%' }, { item: 'Manutenções Avulsas', val: 'R$ 3.950', p: '26%' }, { item: 'Insumos / Outros', val: 'R$ 2.550', p: '18%' }].map((row, i) => (
+              {[{ item: 'Contratos Fixos', val: 'R$ 0', p: '0%' }, { item: 'Manutenções Avulsas', val: 'R$ 0', p: '0%' }, { item: 'Insumos / Outros', val: 'R$ 0', p: '0%' }].map((row, i) => (
                 <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
                   <span className="text-xs text-slate-600 text-left">{row.item}</span>
                   <div className="text-right"><p className="text-xs font-bold text-slate-900">{row.val}</p><p className="text-[10px] text-slate-400">{row.p}</p></div>
