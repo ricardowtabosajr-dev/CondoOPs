@@ -35,12 +35,56 @@ export function Dashboard() {
   const criticalEquipments = equipments.filter(e => e.status !== 'operational');
   const openTickets = tickets.filter(t => t.status === 'open');
 
+  // Calculate dynamic KPIs
+  const completedInspections = inspections.filter(i => i.status === 'completed');
+  const avgCompliance = completedInspections.length > 0
+    ? Math.round(completedInspections.reduce((acc, i) => acc + (i.score || 0), 0) / completedInspections.length)
+    : 0;
+
+  const pendingInspections = inspections.filter(i => i.status === 'draft');
+  const highPriorityTickets = tickets.filter(t => t.priority === 'high' && t.status === 'open');
+
   const kpiCards = [
-    { title: "Conformidade", value: "0%", icon: Activity, trend: "0%", color: "text-emerald-500", bg: "bg-emerald-50", trendColor: "text-emerald-600", path: "/inspections" },
-    { title: "Chamados Abertos", value: openTickets.length, icon: AlertTriangle, trend: `${tickets.filter(t => t.priority === 'high').length} críticos`, color: "text-amber-500", bg: "bg-amber-50", trendColor: "text-amber-600", path: "/tickets" },
-    { title: "Inspeções Pendentes", value: inspections.length, icon: Clock, trend: `${inspections.filter(i => i.status === 'draft').length} rascunhos`, color: "text-indigo-500", bg: "bg-indigo-50", trendColor: "text-slate-500", path: "/inspections" },
+    { title: "Conformidade", value: `${avgCompliance}%`, icon: Activity, trend: `${avgCompliance > 80 ? '+5%' : 'Verificar'}`, color: "text-emerald-500", bg: "bg-emerald-50", trendColor: avgCompliance > 80 ? "text-emerald-600" : "text-amber-600", path: "/inspections" },
+    { title: "Chamados Abertos", value: openTickets.length, icon: AlertTriangle, trend: `${highPriorityTickets.length} críticos`, color: "text-amber-500", bg: "bg-amber-50", trendColor: highPriorityTickets.length > 0 ? "text-red-600" : "text-amber-600", path: "/tickets" },
+    { title: "Inspeções Pendentes", value: pendingInspections.length, icon: Clock, trend: `${inspections.length} total`, color: "text-indigo-500", bg: "bg-indigo-50", trendColor: "text-slate-500", path: "/inspections" },
     { title: "Manutenções Ativas", value: criticalEquipments.length, icon: Wrench, trend: `${equipments.length} ativos no total`, color: "text-slate-600", bg: "bg-slate-100", trendColor: "text-slate-500", path: "/maintenance" },
   ]
+
+  // Dynamic Chart Data: Costs (Last 6 Months)
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const last6Months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i));
+    return { month: d.getMonth(), year: d.getFullYear(), name: monthNames[d.getMonth()] };
+  });
+
+  const maintenanceChartData = last6Months.map(m => {
+    const monthTransactions = transactions.filter(t => {
+      const td = new Date(t.date);
+      return td.getMonth() === m.month && td.getFullYear() === m.year && t.type === 'out';
+    });
+
+    return {
+      name: m.name,
+      prev: monthTransactions.filter(t => t.cat === 'prev').reduce((acc, t) => acc + parseFloat(t.value || '0'), 0),
+      corr: monthTransactions.filter(t => t.cat === 'corr').reduce((acc, t) => acc + parseFloat(t.value || '0'), 0),
+    };
+  });
+
+  // Dynamic Chart Data: Compliance (Last 6 Inspections)
+  const complianceChartData = inspections
+    .filter(i => i.status === 'completed')
+    .slice(0, 6)
+    .reverse()
+    .map((i, idx) => ({
+      name: `Insp ${idx + 1}`,
+      score: i.score
+    }));
+
+  if (complianceChartData.length === 0) {
+    complianceChartData.push({ name: 'S/ Dados', score: 0 });
+  }
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -52,7 +96,6 @@ export function Dashboard() {
           <p className="text-slate-500 mt-1">Bem-vindo de volta, Síndico. Aqui está o resumo operacional de hoje.</p>
         </div>
       </div>
-
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpiCards.map((kpi, index) => (
@@ -70,7 +113,7 @@ export function Dashboard() {
               <CardContent>
                 <div className="text-3xl font-bold text-slate-900">{kpi.value}</div>
                 <div className={`flex items-center mt-2 text-xs font-medium ${kpi.trendColor}`}>
-                  {kpi.trend.includes('+') ? <TrendingUp className="h-3 w-3 mr-1" /> : null}
+                  {kpi.trend.toString().includes('+') ? <TrendingUp className="h-3 w-3 mr-1" /> : null}
                   {kpi.trend}
                   <ArrowUpRight className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-all" />
                 </div>
@@ -96,7 +139,7 @@ export function Dashboard() {
             <CardContent className="p-6">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={CHART_DATA.maintenance}>
+                  <BarChart data={maintenanceChartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={(val) => `R$${val}`} />
@@ -119,7 +162,7 @@ export function Dashboard() {
             <CardContent className="p-6">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={CHART_DATA.compliance}>
+                  <LineChart data={complianceChartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} domain={[0, 100]} />
