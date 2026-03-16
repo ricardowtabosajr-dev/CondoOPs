@@ -202,3 +202,65 @@ export const generateOperationalPDF = (data: { tickets: any[], equipments: any[]
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
 };
+export const generateInspectionsSummaryPDF = (inspections: any[]) => {
+    const doc = new jsPDF()
+
+    // Header
+    doc.setFontSize(22)
+    doc.setTextColor(79, 70, 229)
+    doc.text('Relatorio Geral de Inspecoes', 14, 22)
+
+    doc.setFontSize(10)
+    doc.setTextColor(100, 116, 139)
+    doc.text(`Total de registros: ${inspections.length}`, 14, 30)
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 35)
+
+    const tableBody = inspections.map(i => {
+        const opened = i.openedAt ? new Date(i.openedAt).toLocaleString('pt-BR') : i.date
+        const closed = i.completedAt ? new Date(i.completedAt).toLocaleString('pt-BR') : (i.status === 'completed' ? 'Sim (Sem data)' : 'Pendente')
+
+        // Extract non-conforming area names
+        const nokAreas = (i.areas || [])
+            .filter((a: any) => {
+                let obj = a;
+                if (typeof a === 'string' && (a.startsWith('{') || a.startsWith('['))) {
+                    try { obj = JSON.parse(a); } catch (e) { }
+                }
+                return typeof obj === 'object' && obj.status === 'nok';
+            })
+            .map((a: any) => {
+                let obj = a;
+                if (typeof a === 'string' && (a.startsWith('{') || a.startsWith('['))) {
+                    try { obj = JSON.parse(a); } catch (e) { }
+                }
+                return obj.name || 'Area';
+            })
+            .join(', ');
+
+        return [
+            i.id,
+            i.inspector,
+            i.type,
+            opened,
+            closed,
+            `${i.score}%`,
+            nokAreas || 'Nenhuma'
+        ]
+    })
+
+    autoTable(doc, {
+        startY: 45,
+        head: [['ID', 'Inspetor', 'Tipo', 'Abertura', 'Fechamento', 'Score', 'Pendencias']],
+        body: tableBody,
+        theme: 'striped',
+        headStyles: { fillColor: [79, 70, 229] },
+        styles: { fontSize: 8 },
+        columnStyles: {
+            6: { cellWidth: 40 } // Pendencias column width
+        }
+    })
+
+    const blob = doc.output('blob')
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+}

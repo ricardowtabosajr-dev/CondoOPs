@@ -82,6 +82,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
                     id: i.id, inspector: i.inspector, type: i.type,
                     periodicity: i.periodicity, date: i.date,
                     status: i.status, score: i.score, areas: parsedAreas,
+                    openedAt: i.created_at,
+                    completedAt: i.completed_at,
                 }
             }))
 
@@ -178,10 +180,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
 
     const updateInspection = async (id: string, updates: any) => {
-        const { error } = await supabase.from('inspections').update(updates).eq('id', id)
+        const dbUpdates = { ...updates }
+        if (updates.status === 'completed') {
+            dbUpdates.completed_at = new Date().toISOString()
+        }
+        const { error } = await supabase.from('inspections').update(dbUpdates).eq('id', id)
         if (!error) {
-            setInspections(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
-            console.log(`Inspeção ${id} atualizada com sucesso pelo vínculo do chamado.`)
+            setInspections(prev => prev.map(i => i.id === id ? { ...i, ...dbUpdates } : i))
+            console.log(`Inspeção ${id} atualizada com sucesso.`)
         } else {
             console.error('Erro ao atualizar inspeção:', error)
         }

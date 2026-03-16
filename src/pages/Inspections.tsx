@@ -7,7 +7,7 @@ import { Modal } from "@/src/components/ui/Modal"
 import { motion } from "motion/react"
 import { toast } from "sonner"
 import { Plus, Search, FileText, Trash2, Eye, CheckCircle2, CalendarDays, SlidersHorizontal, MapPin, ClipboardList, Camera, Image, X, ExternalLink } from "lucide-react"
-import { generateInspectionPDF } from "@/src/lib/pdf-generator"
+import { generateInspectionPDF, generateInspectionsSummaryPDF } from "@/src/lib/pdf-generator"
 import { useData } from "@/src/context/DataContext"
 import { useNotifications } from "@/src/context/NotificationContext"
 import { useAuth } from "@/src/context/AuthContext"
@@ -643,6 +643,17 @@ export function Inspections() {
                 </Button>
                 <Button variant="outline" size="sm" className={`rounded-xl ${filterPeriod !== 'all' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'border-slate-200'}`} onClick={() => setIsPeriodModalOpen(true)}>
                   <CalendarDays className="h-4 w-4 mr-2" /> Período
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white"
+                  onClick={() => {
+                    generateInspectionsSummaryPDF(filteredInspections);
+                    toast.success('Relatório geral gerado com sucesso!');
+                  }}
+                >
+                  <FileText className="h-4 w-4 mr-2" /> Gerar Relatório
                 </Button>
               </div>
             </div>

@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS public.inspections (
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'completed')),
   score INTEGER NOT NULL DEFAULT 0,
   areas TEXT[] DEFAULT ARRAY[]::TEXT[],
+  completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
