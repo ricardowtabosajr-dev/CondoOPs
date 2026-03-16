@@ -215,12 +215,12 @@ export function Tickets() {
             </div>
 
             {/* Fotos da Inspeção (Se houver) */}
-            {selectedTicket.inspection_id && (
+            {selectedTicket.inspectionId && (
               <div className="pt-4 border-t border-slate-100">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 text-left">Evidências da Inspeção</p>
                 <div className="grid grid-cols-2 gap-2">
                   {(() => {
-                    const linkedInsp = inspections.find(i => i.id === selectedTicket.inspection_id)
+                    const linkedInsp = inspections.find(i => i.id === selectedTicket.inspectionId)
                     if (!linkedInsp) return <p className="text-[10px] text-slate-400 col-span-2 text-left italic">Inspeção vinculada não encontrada ou removida.</p>
 
                     // Procurar a área correspondente no array de áreas da inspeção
