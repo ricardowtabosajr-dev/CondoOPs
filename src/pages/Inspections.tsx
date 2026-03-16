@@ -29,7 +29,14 @@ interface InspectionArea {
 }
 
 export function Inspections() {
-  const { inspections, addInspection, removeInspection, tickets, addTicket } = useData()
+  const {
+    inspections,
+    addInspection,
+    updateInspection,
+    removeInspection,
+    tickets,
+    addTicket
+  } = useData()
   const { addNotification } = useNotifications()
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
@@ -546,23 +553,44 @@ export function Inspections() {
                     const areas = selectedInspection.areas || []
                     // Count conforme: ok and na are both "acceptable"
                     const conformeCount = areas.filter((a: any) => {
-                      const s = typeof a === 'string' ? 'ok' : a.status
-                      return s === 'ok' || s === 'na'
-                    }).length
+                      let obj = a;
+                      if (typeof a === 'string' && (a.startsWith('{') || a.startsWith('['))) {
+                        try { obj = JSON.parse(a); } catch (e) { }
+                      }
+                      const s = typeof obj === 'string' ? 'ok' : (obj.status || 'ok');
+                      return s === 'ok' || s === 'na';
+                    }).length;
+
                     const evaluatedCount = areas.filter((a: any) => {
-                      const s = typeof a === 'string' ? 'ok' : a.status
-                      return s !== null && s !== undefined
-                    }).length
-                    const score = evaluatedCount > 0 ? Math.round((conformeCount / evaluatedCount) * 100) : 100
+                      let obj = a;
+                      if (typeof a === 'string' && (a.startsWith('{') || a.startsWith('['))) {
+                        try { obj = JSON.parse(a); } catch (e) { }
+                      }
+                      const s = typeof obj === 'string' ? 'ok' : obj.status;
+                      return s !== null && s !== undefined;
+                    }).length;
+
+                    const score = evaluatedCount > 0 ? Math.round((conformeCount / evaluatedCount) * 100) : 100;
 
                     // Check for non-conforming areas to create tickets
                     const nokAreas = areas
-                      .filter((a: any) => typeof a === 'object' && a.status === 'nok')
-                      .map((a: any) => a.name || a.description || 'Área')
+                      .filter((a: any) => {
+                        let obj = a;
+                        if (typeof a === 'string' && (a.startsWith('{') || a.startsWith('['))) {
+                          try { obj = JSON.parse(a); } catch (e) { }
+                        }
+                        return typeof obj === 'object' && obj.status === 'nok';
+                      })
+                      .map((a: any) => {
+                        let obj = a;
+                        if (typeof a === 'string' && (a.startsWith('{') || a.startsWith('['))) {
+                          try { obj = JSON.parse(a); } catch (e) { }
+                        }
+                        return obj.name || obj.description || 'Área';
+                      });
 
-                    // Update inspection
-                    const updatedInsp = { ...selectedInspection, status: 'completed', score }
-                    setSelectedInspection(updatedInsp)
+                    // Update inspection in DB
+                    updateInspection(selectedInspection.id, { status: 'completed', score })
 
                     if (nokAreas.length > 0) {
                       // Create tickets for non-conforming areas
@@ -579,9 +607,9 @@ export function Inspections() {
                           updatedAt: new Date().toISOString(),
                         })
                       })
-                      toast.success(`Inspeção concluída! ${nokAreas.length} chamado(s) gerado(s) para áreas não conformes.`)
+                      toast.success(`Inspeção concluída! ${nokAreas.length} chamado(s) gerado(s).`)
                     } else {
-                      toast.success('Inspeção concluída com sucesso! Todas as áreas conformes.')
+                      toast.success('Inspeção concluída com sucesso!')
                     }
                   }}
                 >

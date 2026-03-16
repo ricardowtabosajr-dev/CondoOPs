@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { supabase } from "@/src/lib/supabase"
+import { toast } from 'sonner'
 
 export interface Transaction {
     date: string
@@ -54,6 +55,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 id: t.id, title: t.title, description: t.description,
                 status: t.status, priority: t.priority,
                 inspectionId: t.inspection_id,
+                resolution: t.resolution || '',
                 createdAt: t.created_at, updatedAt: t.updated_at,
             })))
 
@@ -126,13 +128,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
             // Lógica de encerramento automático da inspeção
             if (updates.status === 'resolved') {
-                const ticket = tickets.find(t => t.id === id)
-                if (ticket?.inspectionId) {
-                    await updateInspection(ticket.inspectionId, { status: 'completed', score: 100 })
+                // Procurar no estado atual para obter o inspectionId
+                const ticket = tickets.find(t => t.id === id);
+                const inspId = ticket?.inspectionId || updates.inspectionId;
+
+                if (inspId) {
+                    await updateInspection(inspId, { status: 'completed', score: 100 });
                 }
             }
         } else {
-            console.error('Erro ao atualizar chamado:', error)
+            console.error('Erro detalhado ao atualizar chamado:', error)
+            toast.error(`Falha ao atualizar chamado: ${error.message}`)
         }
     }
 
