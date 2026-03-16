@@ -12,6 +12,7 @@ import { Tickets } from "./pages/Tickets"
 import { Maintenance } from "./pages/Maintenance"
 import { Financial } from "./pages/Financial"
 import { Settings } from "./pages/Settings"
+import { Notes } from "./pages/Notes"
 import { LoginPage } from "./pages/LoginPage"
 import { Toaster } from "sonner"
 import { DataProvider } from "./context/DataContext"
@@ -57,6 +58,7 @@ function AppRoutes() {
             <Route path="inspections/new" element={<ProtectedRoute permission="inspections"><NewInspection /></ProtectedRoute>} />
             <Route path="tickets" element={<ProtectedRoute permission="tickets"><Tickets /></ProtectedRoute>} />
             <Route path="maintenance" element={<ProtectedRoute permission="maintenance"><Maintenance /></ProtectedRoute>} />
+            <Route path="notes" element={<ProtectedRoute permission="notes"><Notes /></ProtectedRoute>} />
             <Route path="financial" element={<ProtectedRoute permission="financial"><Financial /></ProtectedRoute>} />
             <Route path="settings" element={<ProtectedRoute permission="settings"><Settings /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />

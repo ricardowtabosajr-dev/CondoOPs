@@ -11,6 +11,7 @@ import {
   Building2,
   LogOut,
   ShieldAlert,
+  StickyNote,
   X,
 } from "lucide-react"
 import { useAuth } from "@/src/context/AuthContext"
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Inspeções', href: '/inspections', icon: ClipboardCheck, permission: 'inspections' },
   { name: 'Chamados', href: '/tickets', icon: AlertTriangle, permission: 'tickets' },
   { name: 'Manutenção', href: '/maintenance', icon: Wrench, permission: 'maintenance' },
+  { name: 'Anotações', href: '/notes', icon: StickyNote, permission: 'notes' },
   { name: 'Financeiro', href: '/financial', icon: FileText, permission: 'financial' },
   { name: 'Configurações', href: '/settings', icon: Settings, permission: 'settings' },
 ]

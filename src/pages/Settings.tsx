@@ -23,6 +23,7 @@ const ALL_MODULES = [
   { id: 'tickets', label: 'Chamados', desc: 'Abrir, visualizar e gerenciar chamados.' },
   { id: 'inspections', label: 'Inspeções', desc: 'Criar e gerenciar inspeções técnicas.' },
   { id: 'maintenance', label: 'Manutenção', desc: 'Gerenciar ativos e plano de manutenção.' },
+  { id: 'notes', label: 'Anotações', desc: 'Registrar ocorrências e anotações do dia a dia.' },
   { id: 'financial', label: 'Financeiro', desc: 'Visualizar e lançar despesas e receitas.' },
   { id: 'settings', label: 'Configurações', desc: 'Gerenciar usuários e configurações do sistema.' },
 ]

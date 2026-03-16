@@ -28,6 +28,10 @@ interface DataContextType {
     transactions: Transaction[]
     addTransaction: (txn: Transaction) => void
 
+    notes: any[]
+    addNote: (note: any) => Promise<void>
+    removeNote: (id: string) => Promise<void>
+
     loading: boolean
 }
 
@@ -38,17 +42,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const [tickets, setTickets] = useState<any[]>([])
     const [equipments, setEquipments] = useState<any[]>([])
     const [transactions, setTransactions] = useState<Transaction[]>([])
+    const [notes, setNotes] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     // Fetch all data from Supabase on mount
     useEffect(() => {
         async function fetchAll() {
             setLoading(true)
-            const [ticketsRes, equipmentsRes, inspectionsRes, transactionsRes] = await Promise.all([
+            const [ticketsRes, equipmentsRes, inspectionsRes, transactionsRes, notesRes] = await Promise.all([
                 supabase.from('tickets').select('*').order('created_at', { ascending: false }),
                 supabase.from('equipments').select('*').order('created_at', { ascending: false }),
                 supabase.from('inspections').select('*').order('created_at', { ascending: false }),
                 supabase.from('transactions').select('*').order('created_at', { ascending: false }),
+                supabase.from('notes').select('*').order('created_at', { ascending: false }),
             ])
 
             if (ticketsRes.data) setTickets(ticketsRes.data.map(t => ({
@@ -90,6 +96,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
             if (transactionsRes.data) setTransactions(transactionsRes.data.map(t => ({
                 date: t.date, desc: t.description, cat: t.category,
                 value: t.value, type: t.type as 'in' | 'out',
+            })))
+
+            if (notesRes.data) setNotes(notesRes.data.map(n => ({
+                id: n.id,
+                content: n.content,
+                author: n.author,
+                createdAt: n.created_at,
             })))
 
             setLoading(false)
@@ -211,12 +224,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
         else console.error('Erro ao criar transação:', error)
     }
 
+    // ─── Notes ───
+    const addNote = async (note: any) => {
+        const { error } = await supabase.from('notes').insert({
+            id: note.id,
+            content: note.content,
+            author: note.author,
+        })
+        if (!error) setNotes(prev => [{ ...note, createdAt: new Date().toISOString() }, ...prev])
+        else console.error('Erro ao criar anotação:', error)
+    }
+
+    const removeNote = async (id: string) => {
+        const { error } = await supabase.from('notes').delete().eq('id', id)
+        if (!error) setNotes(prev => prev.filter(n => n.id !== id))
+    }
+
     return (
         <DataContext.Provider value={{
             inspections, addInspection, updateInspection, removeInspection,
             tickets, addTicket, updateTicket, removeTicket,
             equipments, addEquipment, removeEquipment,
-            transactions, addTransaction, loading,
+            transactions, addTransaction,
+            notes, addNote, removeNote,
+            loading,
         }}>
             {children}
         </DataContext.Provider>

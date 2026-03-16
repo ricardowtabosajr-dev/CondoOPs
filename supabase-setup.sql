@@ -68,7 +68,15 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 6. Tabela de Notificações
+-- 6. Tabela de Anotações
+CREATE TABLE IF NOT EXISTS public.notes (
+  id TEXT PRIMARY KEY,
+  content TEXT NOT NULL,
+  author TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 7. Tabela de Notificações
 CREATE TABLE IF NOT EXISTS public.notifications (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
