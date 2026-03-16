@@ -25,7 +25,8 @@ export const generateInspectionPDF = (inspection: any) => {
         head: [['Campo', 'Informacao']],
         body: [
             ['Inspetor', inspection.inspector],
-            ['Data da Inspecao', inspection.date],
+            ['Abertura', inspection.openedAt ? new Date(inspection.openedAt).toLocaleString('pt-BR') : inspection.date],
+            ['Fechamento', inspection.completedAt ? new Date(inspection.completedAt).toLocaleString('pt-BR') : (inspection.status === 'completed' ? 'Sim' : 'Pendente')],
             ['Tipo', inspection.type],
             ['Periodicidade', inspection.periodicity || 'N/A'],
             ['Status', inspection.status === 'completed' ? 'Concluida' : 'Rascunho'],
@@ -216,8 +217,13 @@ export const generateInspectionsSummaryPDF = (inspections: any[]) => {
     doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 35)
 
     const tableBody = inspections.map(i => {
-        const opened = i.openedAt ? new Date(i.openedAt).toLocaleString('pt-BR') : i.date
-        const closed = i.completedAt ? new Date(i.completedAt).toLocaleString('pt-BR') : (i.status === 'completed' ? 'Sim (Sem data)' : 'Pendente')
+        const opened = i.openedAt
+            ? new Date(i.openedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            : i.date;
+
+        const closed = i.completedAt
+            ? new Date(i.completedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            : (i.status === 'completed' ? 'Sim' : 'Pendente');
 
         // Extract non-conforming area names
         const nokAreas = (i.areas || [])

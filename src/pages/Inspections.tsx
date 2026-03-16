@@ -662,8 +662,9 @@ export function Inspections() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[150px]">ID</TableHead>
-                  <TableHead>Data</TableHead>
+                  <TableHead className="w-[140px]">ID</TableHead>
+                  <TableHead>Abertura</TableHead>
+                  <TableHead>Fechamento</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Inspetor</TableHead>
                   <TableHead>Status</TableHead>
@@ -675,7 +676,12 @@ export function Inspections() {
                 {filteredInspections.length > 0 ? filteredInspections.map((insp) => (
                   <motion.tr key={insp.id} variants={item} className="group hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-0">
                     <TableCell className="font-bold text-indigo-600 py-4">{insp.id}</TableCell>
-                    <TableCell className="text-slate-600">{insp.date}</TableCell>
+                    <TableCell className="text-slate-600 text-[11px] leading-tight">
+                      {insp.openedAt ? new Date(insp.openedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : insp.date}
+                    </TableCell>
+                    <TableCell className="text-slate-600 text-[11px] leading-tight">
+                      {insp.completedAt ? new Date(insp.completedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : (insp.status === 'completed' ? 'Sim' : '-')}
+                    </TableCell>
                     <TableCell><Badge variant="secondary" className="font-medium">{insp.type}</Badge></TableCell>
                     <TableCell className="text-slate-700 font-medium">{insp.inspector}</TableCell>
                     <TableCell><Badge variant={insp.status === 'completed' ? 'success' : 'warning'} className="rounded-md px-2">{insp.status === 'completed' ? 'Concluída' : 'Rascunho'}</Badge></TableCell>
