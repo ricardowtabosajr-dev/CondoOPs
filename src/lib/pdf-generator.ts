@@ -270,3 +270,50 @@ export const generateInspectionsSummaryPDF = (inspections: any[]) => {
     const url = URL.createObjectURL(blob)
     window.open(url, '_blank')
 }
+
+export const generateNotesPDF = (notes: any[]) => {
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(79, 70, 229); // Indigo 600
+    doc.text('Relatorio de Anotacoes', 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // Slate 500
+    doc.text(`Total de registros: ${notes.length}`, 14, 30);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 35);
+
+    // Divider
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(226, 232, 240); // Slate 200
+    doc.line(14, 40, 196, 40);
+
+    const tableBody = notes.map(n => [
+        new Date(n.createdAt).toLocaleString('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit',
+        }),
+        n.author,
+        n.content
+    ]);
+
+    autoTable(doc, {
+        startY: 45,
+        head: [['Data/Hora', 'Operador', 'Relato da Ocorrencia']],
+        body: tableBody,
+        theme: 'striped',
+        headStyles: { fillColor: [79, 70, 229] },
+        styles: { fontSize: 9 },
+        columnStyles: {
+            0: { cellWidth: 35 },
+            1: { cellWidth: 35 },
+            2: { cellWidth: 'auto' }
+        },
+    });
+
+    // Open for Printing
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+};

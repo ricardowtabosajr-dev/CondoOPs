@@ -5,9 +5,10 @@ import { Badge } from "@/src/components/ui/Badge"
 import { Modal } from "@/src/components/ui/Modal"
 import { motion } from "motion/react"
 import { toast } from "sonner"
-import { Plus, Search, StickyNote, Trash2, User, Clock, Send } from "lucide-react"
+import { Plus, Search, StickyNote, Trash2, User, Clock, Send, FileText } from "lucide-react"
 import { useData } from "@/src/context/DataContext"
 import { useAuth } from "@/src/context/AuthContext"
+import { generateNotesPDF } from "@/src/lib/pdf-generator"
 
 const container = {
     hidden: { opacity: 0 },
@@ -75,6 +76,22 @@ export function Notes() {
         })
     }
 
+    const handleGenerateReport = () => {
+        if (filteredNotes.length === 0) {
+            toast.error('Nenhuma anotação para gerar relatório.')
+            return
+        }
+
+        toast.promise(new Promise((resolve) => setTimeout(() => {
+            generateNotesPDF(filteredNotes)
+            resolve(true)
+        }, 1200)), {
+            loading: 'Gerando relatório de anotações...',
+            success: 'Relatório aberto em nova aba!',
+            error: 'Erro ao gerar relatório.',
+        })
+    }
+
     return (
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
             {/* Header */}
@@ -85,12 +102,21 @@ export function Notes() {
                     </h1>
                     <p className="text-slate-500 mt-1">Registre ocorrências e observações do dia a dia.</p>
                 </div>
-                <Button
-                    className="bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100"
-                    onClick={() => setIsModalOpen(true)}
-                >
-                    <Plus className="h-4 w-4 mr-2" /> Nova Anotação
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        className="bg-white border-slate-200"
+                        onClick={handleGenerateReport}
+                    >
+                        <FileText className="h-4 w-4 mr-2" /> Gerar Relatório
+                    </Button>
+                    <Button
+                        className="bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100"
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        <Plus className="h-4 w-4 mr-2" /> Nova Anotação
+                    </Button>
+                </div>
             </div>
 
             {/* Modal: Nova Anotação */}
