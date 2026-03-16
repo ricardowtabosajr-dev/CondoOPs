@@ -28,7 +28,7 @@ const item = {
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { tickets, addTicket, equipments, inspections } = useData()
+  const { tickets, addTicket, equipments, inspections, transactions } = useData()
   const { addNotification } = useNotifications()
   const { user } = useAuth()
 
