@@ -100,10 +100,17 @@ export function Tickets() {
   const handleChangeStatus = async (ticketId: string, newStatus: string, resolution?: string) => {
     const updates: any = { status: newStatus }
     if (resolution) updates.resolution = resolution
+    else if (newStatus === 'resolved') updates.resolution = 'Problema resolvido.'
     await updateTicket(ticketId, updates)
     // Update selected ticket in modal
     if (selectedTicket && selectedTicket.id === ticketId) {
       setSelectedTicket({ ...selectedTicket, status: newStatus, resolution: resolution || selectedTicket.resolution })
+
+      // Close modal automatically if resolved
+      if (newStatus === 'resolved') {
+        setIsViewModalOpen(false)
+        setResolutionNote('')
+      }
     }
     const statusLabels: Record<string, string> = { open: 'Aberto', in_progress: 'Em Andamento', resolved: 'Resolvido' }
     toast.success(`Status atualizado para: ${statusLabels[newStatus]}`)
@@ -273,11 +280,8 @@ export function Tickets() {
                 )}
                 {selectedTicket.status !== 'resolved' && (
                   <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold" onClick={() => {
-                    if (!resolutionNote.trim()) {
-                      toast.error('Preencha o resumo da ação corretiva antes de encerrar.')
-                      return
-                    }
-                    handleChangeStatus(selectedTicket.id, 'resolved', resolutionNote.trim())
+                    const finalResolution = resolutionNote.trim() || 'Problema resolvido conforme inspeção.'
+                    handleChangeStatus(selectedTicket.id, 'resolved', finalResolution)
                   }}>
                     <CheckCircle2 className="h-4 w-4 mr-1.5" /> Encerrar Chamado
                   </Button>
