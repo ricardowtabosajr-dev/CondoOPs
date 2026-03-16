@@ -67,7 +67,7 @@ export function Inspections() {
     newAreaName: '',
   })
 
-  const predefinedAreas = ['Piscina e Deck', 'Academia', 'Garagens (G1/G2)', 'Telhado e Caixas d\'Água', 'Áreas Comuns', 'Salão de Festas', 'Jardim', 'Portaria', 'Casa de Máquinas', 'Reservatórios', 'Playground', 'Quadra Esportiva']
+  const predefinedAreas = ['Piscina e Deck', 'Academia', 'Garagem', 'Lixeira', 'Telhado e Caixas d\'Água', 'Áreas Comuns', 'Salão de Festas', 'Jardim', 'Portaria', 'Casa de Máquinas', 'Reservatórios', 'Playground', 'Quadra Esportiva']
 
   const addArea = (areaName?: string) => {
     const name = areaName || newInspection.newAreaName.trim()
