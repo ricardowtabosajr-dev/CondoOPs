@@ -1,13 +1,11 @@
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/Card"
 import { Badge } from "@/src/components/ui/Badge"
 import { Button } from "@/src/components/ui/Button"
-import { Modal } from "@/src/components/ui/Modal"
 import { motion } from "motion/react"
 import { toast } from "sonner"
 import {
   AlertTriangle, CheckCircle2, Clock, TrendingUp, Activity,
-  Wrench, ArrowUpRight, ShieldCheck, FileDown, Plus, MessageSquare, Send
+  Wrench, ArrowUpRight, ShieldCheck
 } from "lucide-react"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -16,7 +14,6 @@ import {
 import { CHART_DATA } from "@/src/lib/mock-data"
 import { useNavigate } from "react-router-dom"
 import { useData } from "@/src/context/DataContext"
-import { generateOperationalPDF } from "@/src/lib/pdf-generator"
 import { useNotifications } from "@/src/context/NotificationContext"
 import { useAuth } from "@/src/context/AuthContext"
 
@@ -34,68 +31,9 @@ export function Dashboard() {
   const { tickets, addTicket, equipments, inspections } = useData()
   const { addNotification } = useNotifications()
   const { user } = useAuth()
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-
-  const [newTicket, setNewTicket] = useState({
-    title: '',
-    priority: 'medium',
-    location: ''
-  })
 
   const criticalEquipments = equipments.filter(e => e.status !== 'operational');
   const openTickets = tickets.filter(t => t.status === 'open');
-
-  const handleGenerateReport = () => {
-    toast.promise(new Promise((resolve) => setTimeout(() => {
-      generateOperationalPDF({ tickets, equipments, inspections });
-      resolve(true);
-    }, 1500)), {
-      loading: 'Gerando relatório operacional...',
-      success: 'Relatório aberto em nova aba para impressão.',
-      error: 'Erro ao gerar relatório.',
-    });
-  };
-
-  const handleCreateTicket = (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    const id = `CH-${String(1000 + tickets.length + 1)}`
-    const entry = {
-      id,
-      title: newTicket.title,
-      description: `Local: ${newTicket.location || 'Não especificado'}`,
-      status: 'open' as const,
-      priority: newTicket.priority as "high" | "medium" | "low",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-
-    toast.promise(new Promise((resolve) => setTimeout(() => {
-      addTicket(entry)
-      // Send notification if non-admin
-      if (user && user.role !== 'Administrador') {
-        addNotification({
-          title: 'Novo Chamado Aberto',
-          message: `"${newTicket.title}" — Prioridade: ${newTicket.priority === 'high' ? 'Alta' : newTicket.priority === 'medium' ? 'Média' : 'Baixa'}`,
-          type: 'ticket',
-          actionBy: user.name,
-          actionByRole: user.role,
-        })
-      }
-      resolve(true)
-    }, 1500)), {
-      loading: 'Enviando chamado para a central...',
-      success: () => {
-        setIsModalOpen(false)
-        setLoading(false)
-        setNewTicket({ title: '', priority: 'medium', location: '' })
-        return 'Chamado registrado com sucesso!'
-      },
-      error: 'Erro ao registrar chamado.',
-    })
-  }
 
   const kpiCards = [
     { title: "Conformidade", value: "0%", icon: Activity, trend: "0%", color: "text-emerald-500", bg: "bg-emerald-50", trendColor: "text-emerald-600", path: "/inspections" },
@@ -113,47 +51,8 @@ export function Dashboard() {
           </h1>
           <p className="text-slate-500 mt-1">Bem-vindo de volta, Síndico. Aqui está o resumo operacional de hoje.</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" className="bg-white border-slate-200" onClick={handleGenerateReport}>
-            <FileDown className="h-4 w-4 mr-2" /> Relatório
-          </Button>
-          <Button variant="outline" className="bg-white border-slate-200" onClick={() => setIsModalOpen(true)}>
-            <MessageSquare className="h-4 w-4 mr-2" /> Novo Chamado
-          </Button>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100" onClick={() => navigate('/inspections/new')}>
-            <Plus className="h-4 w-4 mr-2" /> Nova Inspeção
-          </Button>
-        </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Chamado Rápido">
-        <form className="space-y-4" onSubmit={handleCreateTicket}>
-          <div>
-            <label className="text-sm font-bold text-slate-700 mb-2 block">Assunto</label>
-            <input required type="text" placeholder="Ex: Lâmpada queimada no corredor" value={newTicket.title} onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })} className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-bold text-slate-700 mb-2 block">Prioridade</label>
-              <select value={newTicket.priority} onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value })} className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white">
-                <option value="low">Baixa</option>
-                <option value="medium">Média</option>
-                <option value="high">Alta</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-bold text-slate-700 mb-2 block">Local</label>
-              <input type="text" placeholder="Ex: Bloco A - Hall" value={newTicket.location} onChange={(e) => setNewTicket({ ...newTicket, location: e.target.value })} className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
-              {loading ? 'Enviando...' : <><Send className="h-4 w-4 mr-2" /> Abrir Chamado</>}
-            </Button>
-          </div>
-        </form>
-      </Modal>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpiCards.map((kpi, index) => (
