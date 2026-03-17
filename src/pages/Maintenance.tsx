@@ -21,7 +21,7 @@ const item = {
 }
 
 export function Maintenance() {
-  const { equipments, addEquipment } = useData()
+  const { equipments, addEquipment, updateEquipment } = useData()
   const { addNotification } = useNotifications()
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
@@ -33,6 +33,7 @@ export function Maintenance() {
   const [loading, setLoading] = useState(false)
   const [filterCategory, setFilterCategory] = useState('all')
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [editData, setEditData] = useState<any>(null)
 
   const [newAsset, setNewAsset] = useState({ name: '', category: 'hydraulic', code: '', model: '' })
 
@@ -87,7 +88,25 @@ export function Maintenance() {
   const maintenanceCount = equipments.filter(e => e.status === 'maintenance').length
   const criticalCount = equipments.filter(e => e.status !== 'operational').length
 
-  const handleViewDetail = (eq: any) => { setSelectedEquipment(eq); setIsDetailModalOpen(true); }
+  const handleViewDetail = (eq: any) => {
+    setSelectedEquipment(eq);
+    setEditData({ lastMaintenance: eq.lastMaintenance, nextMaintenance: eq.nextMaintenance });
+    setIsDetailModalOpen(true);
+  }
+
+  const handleUpdateDates = async () => {
+    if (!selectedEquipment || !editData) return;
+    setLoading(true);
+    try {
+      await updateEquipment(selectedEquipment.id, editData);
+      toast.success('Datas de manutenção atualizadas!');
+      setIsDetailModalOpen(false);
+    } catch (error) {
+      toast.error('Erro ao atualizar datas.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const kpiStats = [
     { label: "Ativos em Campo", value: operationalCount, status: 'operational', icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
@@ -182,17 +201,32 @@ export function Maintenance() {
               <span className="text-xs text-slate-400 font-bold">{selectedEquipment.id}</span>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Última Manut.</p>
-                <p className="text-sm font-bold text-slate-900 mt-1 text-left">{selectedEquipment.lastMaintenance}</p>
+                <input
+                  type="date"
+                  value={editData?.lastMaintenance || ''}
+                  onChange={(e) => setEditData({ ...editData, lastMaintenance: e.target.value })}
+                  className="w-full bg-transparent text-sm font-bold text-slate-900 mt-1 focus:outline-none border-none p-0 cursor-pointer"
+                />
               </div>
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Próxima Manut.</p>
-                <p className="text-sm font-bold text-indigo-600 mt-1 text-left">{selectedEquipment.nextMaintenance}</p>
+                <input
+                  type="date"
+                  value={editData?.nextMaintenance || ''}
+                  onChange={(e) => setEditData({ ...editData, nextMaintenance: e.target.value })}
+                  className="w-full bg-transparent text-sm font-bold text-indigo-600 mt-1 focus:outline-none border-none p-0 cursor-pointer"
+                />
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-              <Button variant="outline" className="text-slate-600" onClick={() => setIsDetailModalOpen(false)}>Fechar</Button>
+            <div className="flex justify-between gap-3 pt-4 border-t border-slate-100">
+              <div className="flex gap-2">
+                <Button variant="outline" className="text-slate-600" onClick={() => setIsDetailModalOpen(false)}>Cancelar</Button>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 font-bold" onClick={handleUpdateDates} disabled={loading}>
+                  {loading ? 'Salvando...' : 'Salvar Alterações'}
+                </Button>
+              </div>
               <Button className="bg-indigo-600 hover:bg-indigo-700 font-bold" onClick={() => { setIsDetailModalOpen(false); toast.success('Abrindo ordem de serviço...'); }}>Criar OS</Button>
             </div>
           </div>
@@ -264,8 +298,12 @@ export function Maintenance() {
                     </TableCell>
                     <TableCell><Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none font-medium text-left">{eq.category}</Badge></TableCell>
                     <TableCell><Badge variant={eq.status === 'operational' ? 'success' : eq.status === 'maintenance' ? 'warning' : 'destructive'}>{eq.status === 'operational' ? 'Operacional' : eq.status === 'maintenance' ? 'Em Manutenção' : 'Offline'}</Badge></TableCell>
-                    <TableCell className="text-sm text-slate-600 text-left">{eq.lastMaintenance}</TableCell>
-                    <TableCell className="text-sm text-slate-600 text-left">{eq.nextMaintenance}</TableCell>
+                    <TableCell className="text-sm text-slate-600 text-left cursor-pointer hover:text-indigo-600 font-medium transition-colors" onClick={() => handleViewDetail(eq)}>
+                      {eq.lastMaintenance}
+                    </TableCell>
+                    <TableCell className="text-sm text-slate-600 text-left cursor-pointer hover:text-indigo-600 font-medium transition-colors" onClick={() => handleViewDetail(eq)}>
+                      {eq.nextMaintenance}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600" onClick={() => handleViewDetail(eq)}><Eye className="h-4 w-4" /></Button>

@@ -18,6 +18,7 @@ interface DataContextType {
 
     equipments: any[]
     addEquipment: (eq: any) => void
+    updateEquipment: (id: string, updates: any) => Promise<void>
     removeEquipment: (id: string) => void
 
     inspections: any[]
@@ -176,6 +177,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!error) setEquipments(prev => prev.filter(e => e.id !== id))
     }
 
+    const updateEquipment = async (id: string, updates: any) => {
+        const dbUpdates: any = {}
+        if (updates.name) dbUpdates.name = updates.name
+        if (updates.category) dbUpdates.category = updates.category
+        if (updates.status) dbUpdates.status = updates.status
+        if (updates.lastMaintenance) dbUpdates.last_maintenance = updates.lastMaintenance
+        if (updates.nextMaintenance) dbUpdates.next_maintenance = updates.nextMaintenance
+
+        const { error } = await supabase.from('equipments').update(dbUpdates).eq('id', id)
+        if (!error) {
+            setEquipments(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e))
+        } else {
+            console.error('Erro ao atualizar equipamento:', error)
+            toast.error(`Falha ao atualizar equipamento: ${error.message}`)
+        }
+    }
+
     // ─── Inspections ───
     const addInspection = async (insp: any) => {
         const { error } = await supabase.from('inspections').insert({
@@ -244,7 +262,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         <DataContext.Provider value={{
             inspections, addInspection, updateInspection, removeInspection,
             tickets, addTicket, updateTicket, removeTicket,
-            equipments, addEquipment, removeEquipment,
+            equipments, addEquipment, updateEquipment, removeEquipment,
             transactions, addTransaction,
             notes, addNote, removeNote,
             loading,
